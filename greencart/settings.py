@@ -15,7 +15,6 @@ load_dotenv()
 # ------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Small helper for comma-separated env lists
 def env_list(key: str, default: str = ""):
     raw = os.getenv(key, default)
     return [s.strip() for s in raw.split(",") if s.strip()]
@@ -26,12 +25,16 @@ def env_list(key: str, default: str = ""):
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-unsafe-key")
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "https://pm-dasboard-backend.onrender.com/")
+# IMPORTANT: hostnames only, no scheme or slashes
+ALLOWED_HOSTS = env_list(
+    "ALLOWED_HOSTS",
+    "pm-dasboard-backend.onrender.com,localhost,127.0.0.1"
+)
 
-# If your app sits behind a proxy (Render), trust X-Forwarded-Proto
+# Render proxy -> trust X-Forwarded-Proto
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# Optional cookies security (enable in prod if you use Django sessions/CSRF)
+# Cookies hardened in prod
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 
@@ -56,12 +59,11 @@ INSTALLED_APPS = [
 ]
 
 # ------------------------------------------------------
-# Middleware
-# (WhiteNoise must be near the top, after SecurityMiddleware)
+# Middleware (WhiteNoise after Security, CORS before Common)
 # ------------------------------------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # static files in prod
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -79,7 +81,7 @@ ROOT_URLCONF = "greencart.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],  # add template dirs if needed
+        "DIRS": [],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -94,13 +96,17 @@ TEMPLATES = [
 WSGI_APPLICATION = "greencart.wsgi.application"
 
 # ------------------------------------------------------
-# Database (Render: DATABASE_URL → Postgres; local fallback → SQLite)
+# Database (Postgres on Render; SQLite locally)
+# Avoid passing sslmode to SQLite by detecting scheme
 # ------------------------------------------------------
+db_url = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+ssl_required = db_url.startswith("postgres://") or db_url.startswith("postgresql://")
+
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
+    "default": dj_database_url.parse(
+        db_url,
         conn_max_age=600,
-        ssl_require=not DEBUG,
+        ssl_require=ssl_required,  # only True for Postgres
     )
 }
 
@@ -146,7 +152,6 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    # Lock down by default; loosen per-view if needed
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
@@ -158,9 +163,9 @@ SIMPLE_JWT = {
 }
 
 # ------------------------------------------------------
-# CORS / CSRF (set these env vars to your Vercel URL)
-# e.g. CORS_ALLOWED_ORIGINS=https://your-frontend.vercel.app
-#      CSRF_TRUSTED_ORIGINS=https://your-frontend.vercel.app
+# CORS / CSRF
+# Put your Vercel site URL(s) as full origins with scheme.
+# e.g. CORS_ALLOWED_ORIGINS="https://pm-dasboard-frontend.vercel.app"
 # ------------------------------------------------------
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "")
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", "")
