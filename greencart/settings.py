@@ -26,7 +26,7 @@ def env_list(key: str, default: str = ""):
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-unsafe-key")
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1")
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "https://pm-dasboard-backend.onrender.com/")
 
 # If your app sits behind a proxy (Render), trust X-Forwarded-Proto
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
