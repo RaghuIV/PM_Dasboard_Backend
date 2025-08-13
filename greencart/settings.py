@@ -162,8 +162,8 @@ SIMPLE_JWT = {
 # e.g. CORS_ALLOWED_ORIGINS=https://your-frontend.vercel.app
 #      CSRF_TRUSTED_ORIGINS=https://your-frontend.vercel.app
 # ------------------------------------------------------
-CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS=https://pm-dasboard-frontend.vercel.app/", "")
-CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS=https://pm-dasboard-frontend.vercel.app/", "")
+CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", "")
 CORS_ALLOW_CREDENTIALS = True
 
 # ------------------------------------------------------
